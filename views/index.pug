@@ -2,10 +2,11 @@ extends layout
 
 block content
 	h1 Application Evaluation
-	.row
-		div(class='-2u 8u')
-			form(method='post', enctype='multipart/form-data', action='/')
-				| Import CSV:
-				|
-				input(type='file', name='file')
-				input(type='submit')
+	section
+		.row
+			div(class='-2u 8u 12u(medium)')
+				form(method='post', enctype='multipart/form-data', action='/')
+					| Import CSV:
+					|
+					input(type='file', name='file')
+					input(type='submit')
