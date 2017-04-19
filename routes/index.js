@@ -1,20 +1,15 @@
 var express = require('express');
 var router = express.Router();
 var fs = require('fs');
-var mongojs = require('mongojs');
 var csv = require('csvtojson');
- 
-var databaseURI = 'localhost:27017/valuation';
-var collections = ['applications', 'criteria', 'judge'];
-var db = mongojs(databaseURI, collections);
+var db = require('./dbInteraction');
  
 router.route('/')
     .get(function(req, res, next) {
         res.render('index', {
             title: 'Application Evaluate'
         });
-        db.applications.ensureIndex( { userid: 1 }, {unique:true} )
-        db.criteria.ensureIndex( { crit: 1 }, {unique:true} )
+        db.ensureIndex();
     })
     .post(function(req, res, next) {
         req.pipe(req.busboy);
@@ -36,7 +31,7 @@ router.route('/')
             })
             .fromFile('./public/upload.csv')
             .on('json',(jsonObj)=>{
-                addUserData(jsonObj);
+                db.addAppData(jsonObj);
             });
             res.redirect('back');
         });
@@ -46,11 +41,11 @@ router.route('/judgeoverview')
     .get(function(req, res, next) {
         var crit = req.query.crit;
         if (crit) {
-            deleteCrit(crit);
+            db.deleteCrit(crit);
             return res.redirect('/judgeoverview');
             next();
         };
-        getCritData(function(data) {
+        db.getCritData(function(data) {
             if (data)
             {
                 if (data.length)
@@ -69,7 +64,7 @@ router.route('/judgeoverview')
 router.route('/judge')
     .get(function(req, res, next) {
         var crit = req.query.crit;
-        getCriteria(crit, function(data) {
+        db.getCriteria(crit, function(data) {
             if (data.length)
                 res.locals.data = data[0];
             else
@@ -80,7 +75,12 @@ router.route('/judge')
         });
     })
     .post(function(req,res, next) {
-        setCriteria(req);
+        req.checkBody('crit').notEmpty();
+        req.checkBody('imp').isNumeric();
+        var errors = req.validationErrors();
+        if (!errors) {
+            db.setCriteria(req.body);
+        }
         res.redirect('/judgeoverview');
     });
  
@@ -88,11 +88,11 @@ router.route('/applicationdata')
     .get(function(req, res, next) {
         var del = req.query.del;
         if (del) {
-            deleteAppData();
+            db.deleteAppData();
             return res.redirect('/applicationdata');
             next();
         };
-        getAppData(function(data) {
+        db.getAppData(function(data) {
             if (data)
             {
                 if (data.length)
@@ -114,45 +114,5 @@ router.route('/applicationjudge')
             title: 'Application Data Evaluation'
         });
     });
- 
-function addUserData(data) {
-    db.applications.insert(data);
-}
- 
-function getAppData(cb) {
-    db.applications.find({}, {userid: 0, _id: 0}, function (err, results) {
-        cb(results);
-    });
-}
- 
-function deleteAppData() {
-    db.applications.remove();
-}
- 
-function setCriteria(req) {
-    req.checkBody('crit').notEmpty();
-    req.checkBody('imp').isNumeric();
- 
-    var errors = req.validationErrors();
-    if (!errors) {
-        db.criteria.update({crit: req.body.crit}, req.body, {upsert: true});
-    }
-}
- 
-function getCritData(cb) {
-    db.criteria.find({}, {_id: 0}, function (err, results) {
-        cb(results);
-    });
-}
- 
-function getCriteria(criteria, cb) {
-    db.criteria.find({crit: criteria}, {_id: 0}).limit(1, function (err, result) {
-        cb(result);
-    });
-}
- 
-function deleteCrit(criteria) {
-    db.criteria.remove({crit: criteria});
-}
  
 module.exports = router;
