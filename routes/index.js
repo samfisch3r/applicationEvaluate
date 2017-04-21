@@ -3,7 +3,7 @@ var router = express.Router();
 var fs = require('fs');
 var csv = require('csvtojson');
 var db = require('./dbInteraction');
- 
+
 router.route('/')
     .get(function(req, res, next) {
         res.render('index', {
@@ -31,19 +31,20 @@ router.route('/')
             })
             .fromFile('./public/upload.csv')
             .on('json',(jsonObj)=>{
-                db.addAppData(jsonObj);
+                db.addAppData(jsonObj, function(data) {
+                });
             });
             res.redirect('back');
         });
     });
- 
+
 router.route('/judgeoverview')
     .get(function(req, res, next) {
         var crit = req.query.crit;
         if (crit) {
-            db.deleteCrit(crit);
+            db.deleteCrit(crit, function(data) {
+            });
             return res.redirect('/judgeoverview');
-            next();
         };
         db.getCritData(function(data) {
             if (data)
@@ -60,7 +61,7 @@ router.route('/judgeoverview')
             });
         });
     });
- 
+
 router.route('/judge')
     .get(function(req, res, next) {
         var crit = req.query.crit;
@@ -79,18 +80,19 @@ router.route('/judge')
         req.checkBody('imp').isNumeric();
         var errors = req.validationErrors();
         if (!errors) {
-            db.setCriteria(req.body);
+            db.setCriteria(req.body, function(data) {
+            });
+            return res.redirect('/judgeoverview');
         }
-        res.redirect('/judgeoverview');
     });
- 
+
 router.route('/applicationdata')
     .get(function(req, res, next) {
         var del = req.query.del;
         if (del) {
-            db.deleteAppData();
+            db.deleteAppData(function(data) {
+            });
             return res.redirect('/applicationdata');
-            next();
         };
         db.getAppData(function(data) {
             if (data)
@@ -107,12 +109,12 @@ router.route('/applicationdata')
             });
         });
     });
- 
+
 router.route('/applicationjudge')
     .get(function(req, res, next) {
         res.render('applicationjudge', {
             title: 'Application Data Evaluation'
         });
     });
- 
+
 module.exports = router;
