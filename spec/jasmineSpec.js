@@ -87,11 +87,26 @@ describe('Insert Criteria into MongoDB', function() {
     });
 });
 
+describe('Edit Criteria from MongoDB', function() {
+    it('edits correctly', function(done) {
+        db.getCriteria('TestTest', function(res) {
+            res[0].old = res[0].crit;
+            res[0].crit = 'TestTestTest';
+            db.setCriteria(res[0], function(result) {
+                db.getCritData(function(data) {
+                    expect(data).toContain({crit: 'TestTestTest', imp: 3});
+                    done();
+                });
+            });
+        });
+    });
+});
+
 describe('Delete Criteria from MongoDB', function() {
     it('inserts correctly', function(done) {
-        db.deleteCrit('TestTest', function(res) {
+        db.deleteCrit('TestTestTest', function(res) {
             db.getCritData(function(data) {
-                expect(data).not.toContain({crit: 'TestTest', imp: 3});
+                expect(data).not.toContain({crit: 'TestTestTest', imp: 3});
                 done();
             });
         }); 

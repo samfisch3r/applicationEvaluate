@@ -35,7 +35,9 @@ var deleteSingleData = function(uid, cb) {
 }
 
 var setCriteria = function(data, cb) {
-    db.criteria.update({crit: data.crit}, data, {upsert: true}, function (err, results) {
+    var old = data.old;
+    delete data.old;
+    db.criteria.update({crit: old}, data, {upsert: true}, function (err, results) {
         cb(results);
     });
 }

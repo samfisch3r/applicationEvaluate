@@ -15,11 +15,13 @@ block content
 	h1= title
 	section
 		form(method='post')
+			if data.imp
+				input(type='hidden' name='old' value=data.crit)
 			.row.uniform
 				div(class='12u')
 					label(for='crit') Criteria
 				div(class='6u$')
-					input#crit(type='text', name='crit', value=data.crit)
+					input#crit(type='text', name='crit', required, value=data.crit)
 			.row.uniform
 				div(class='12u')
 					label Importance
